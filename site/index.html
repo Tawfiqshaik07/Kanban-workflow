@@ -1,0 +1,221 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kanban Workflow Dashboard</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f1f5f9;
+  margin: 0;
+  padding: 24px;
+  color: #1e293b;
+}
+h1 { color: #1d4ed8; }
+.summary {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+}
+.stat {
+  background: white;
+  padding: 18px;
+  border-radius: 10px;
+  flex: 1;
+  min-width: 140px;
+}
+.stat strong {
+  display: block;
+  font-size: 26px;
+  margin-top: 8px;
+}
+.add-task {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+input, button, select {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+}
+input { flex: 1; }
+button {
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  border: none;
+}
+.board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.column {
+  background: white;
+  border-radius: 10px;
+  padding: 14px;
+  min-height: 200px;
+}
+.task {
+  background: #eff6ff;
+  padding: 12px;
+  border-radius: 7px;
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+.task select { width: 100%; margin-top: 10px; }
+.warning {
+  padding: 14px;
+  background: #fef3c7;
+  border-radius: 8px;
+  margin-bottom: 18px;
+}
+@media(max-width: 850px) {
+  .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media(max-width: 500px) {
+  .board { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<h1>Kanban Workflow Dashboard</h1>
+<p>Track project tasks and identify workflow bottlenecks.</p>
+
+<div class="summary">
+  <div class="stat">Total Tasks<strong id="total">0</strong></div>
+  <div class="stat">Completed<strong id="completed">0</strong></div>
+  <div class="stat">Progress<strong id="progress">0%</strong></div>
+</div>
+
+<h2>Project Board</h2>
+
+<div class="add-task">
+  <input id="taskName" placeholder="Enter a task name">
+  <button id="addButton">Add Task</button>
+</div>
+
+<div id="warning" class="warning">Checking workflow...</div>
+<div id="board" class="board"></div>
+
+<script>
+const stages = ["To Do", "In Progress", "Testing", "Done"];
+
+let tasks = [
+  {id: 1, name: "Design dashboard", stage: "Done"},
+  {id: 2, name: "Develop task cards", stage: "Testing"},
+  {id: 3, name: "Test application", stage: "Testing"},
+  {id: 4, name: "Configure Docker", stage: "In Progress"},
+  {id: 5, name: "Configure Jenkins", stage: "To Do"}
+];
+
+function addTask() {
+  const input = document.getElementById("taskName");
+  const name = input.value.trim();
+
+  if (!name) {
+    alert("Enter a task name first.");
+    return;
+  }
+
+  tasks.push({
+    id: Date.now(),
+    name: name,
+    stage: "To Do"
+  });
+
+  input.value = "";
+  render();
+}
+
+function moveTask(id, stage) {
+  tasks = tasks.map(task =>
+    task.id === id ? {...task, stage: stage} : task
+  );
+  render();
+}
+
+function render() {
+  const board = document.getElementById("board");
+  board.replaceChildren();
+
+  stages.forEach(stage => {
+    const column = document.createElement("section");
+    column.className = "column";
+
+    const heading = document.createElement("h3");
+    const items = tasks.filter(t => t.stage === stage);
+    heading.textContent = stage + " (" + items.length + ")";
+    column.appendChild(heading);
+
+    items.forEach(task => {
+      const card = document.createElement("div");
+      card.className = "task";
+
+      const name = document.createElement("strong");
+      name.textContent = task.name;
+      card.appendChild(name);
+
+      const select = document.createElement("select");
+
+      stages.forEach(s => {
+        const option = document.createElement("option");
+        option.value = s;
+        option.textContent = "Move to: " + s;
+        option.selected = s === task.stage;
+        select.appendChild(option);
+      });
+
+      select.addEventListener("change", () =>
+        moveTask(task.id, select.value)
+      );
+
+      card.appendChild(select);
+      column.appendChild(card);
+    });
+
+    board.appendChild(column);
+  });
+
+  const total = tasks.length;
+  const completed = tasks.filter(t => t.stage === "Done").length;
+
+  document.getElementById("total").textContent = total;
+  document.getElementById("completed").textContent = completed;
+  document.getElementById("progress").textContent =
+    total ? Math.round(completed / total * 100) + "%" : "0%";
+
+  const activeStages = stages.slice(0, 3).map(stage => ({
+    name: stage,
+    count: tasks.filter(t => t.stage === stage).length
+  }));
+
+  const busiest = activeStages.reduce((a, b) =>
+    b.count > a.count ? b : a
+  );
+
+  const warning = document.getElementById("warning");
+
+  if (busiest.count >= 3) {
+    warning.textContent =
+      "Potential bottleneck: " + busiest.name + " has " +
+      busiest.count + " tasks. Review this stage.";
+  } else {
+    warning.textContent =
+      "No queue-size bottleneck detected at the 3-task threshold.";
+  }
+}
+
+document.getElementById("addButton").addEventListener("click", addTask);
+document.getElementById("taskName").addEventListener("keydown", event => {
+  if (event.key === "Enter") addTask();
+});
+
+render();
+</script>
+</body>
+</html>
