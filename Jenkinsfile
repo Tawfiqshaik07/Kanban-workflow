@@ -3,7 +3,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER = 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe'
+
+DOCKER = 'C:\\Users\\tawfi\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe'
+
     }
 
     stages {
