@@ -25,11 +25,12 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                bat '''
-                    docker rm -f kanban-workflow-app
-                    if errorlevel 1 exit /b 1
-                    docker run -d --name kanban-workflow-app -p 8081:80 kanban-workflow
-                '''
+                
+bat '''
+    docker rm -f kanban-workflow-app >NUL 2>&1
+    docker run -d --name kanban-workflow-app -p 8081:80 kanban-workflow
+'''
+
             }
         }
     }
