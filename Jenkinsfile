@@ -2,6 +2,10 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER = 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe'
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -17,20 +21,25 @@ pipeline {
             }
         }
 
+        stage('Check Docker') {
+            steps {
+                bat '"%DOCKER%" --version'
+                bat '"%DOCKER%" info'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t kanban-workflow .'
+                bat '"%DOCKER%" build -t kanban-workflow .'
             }
         }
 
         stage('Deploy') {
             steps {
-                
-bat '''
-    docker rm -f kanban-workflow-app >NUL 2>&1
-    docker run -d --name kanban-workflow-app -p 8081:80 kanban-workflow
-'''
-
+                bat '''
+                    "%DOCKER%" rm -f kanban-workflow-app
+                    "%DOCKER%" run -d --name kanban-workflow-app -p 8081:80 kanban-workflow
+                '''
             }
         }
     }
